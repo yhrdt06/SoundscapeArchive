@@ -27,10 +27,18 @@ jobs:
         run: xcodebuild -version
 
       - name: Install XcodeGen
-        run: brew install xcodegen
+        run: |
+          # Install specific version compatible with Xcode 15.4
+          brew tap homebrew/cask-versions 2>/dev/null || true
+          brew install xcodegen
 
       - name: Generate Xcode project
-        run: xcodegen generate
+        run: |
+          xcodegen generate --spec project.yml
+          # Fix project format if needed
+          if [ -f "SoundscapeArchive.xcodeproj/project.pbxproj" ]; then
+            sed -i '' 's/objectVersion = 77;/objectVersion = 56;/g' SoundscapeArchive.xcodeproj/project.pbxproj
+          fi
 
       - name: Resolve Swift packages
         run: |
@@ -74,10 +82,17 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app
 
       - name: Install XcodeGen
-        run: brew install xcodegen
+        run: |
+          brew tap homebrew/cask-versions 2>/dev/null || true
+          brew install xcodegen
 
       - name: Generate Xcode project
-        run: xcodegen generate
+        run: |
+          xcodegen generate --spec project.yml
+          # Fix project format if needed
+          if [ -f "SoundscapeArchive.xcodeproj/project.pbxproj" ]; then
+            sed -i '' 's/objectVersion = 77;/objectVersion = 56;/g' SoundscapeArchive.xcodeproj/project.pbxproj
+          fi
 
       - name: Install Fastlane
         run: gem install fastlane
