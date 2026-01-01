@@ -122,14 +122,12 @@ struct RecordEditView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                if let location = record.metadata.location {
-                    HStack {
-                        Text("座標")
-                        Spacer()
-                        Text(String(format: "%.4f, %.4f", location.latitude, location.longitude))
-                            .foregroundStyle(.secondary)
-                            .font(.caption)
-                    }
+                HStack {
+                    Text("座標")
+                    Spacer()
+                    Text(String(format: "%.4f, %.4f", record.metadata.location.latitude, record.metadata.location.longitude))
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
                 }
             }
         }
@@ -174,7 +172,7 @@ struct RecordEditView: View {
     private func save() {
         isSaving = true
 
-        Task {
+        Task { @MainActor in
             do {
                 let dataStore = LocalDataStore(modelContext: modelContext)
 
@@ -204,10 +202,7 @@ struct RecordEditView: View {
                 }
 
                 try dataStore.updateRecord(updatedRecord)
-
-                await MainActor.run {
-                    dismiss()
-                }
+                dismiss()
             } catch {
                 print("Failed to save: \(error)")
                 isSaving = false

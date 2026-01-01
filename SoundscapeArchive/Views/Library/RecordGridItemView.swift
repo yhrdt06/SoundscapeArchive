@@ -15,7 +15,7 @@ struct RecordGridItemView: View {
                 VStack(spacing: 4) {
                     Image(systemName: "waveform")
                         .font(.largeTitle)
-                        .foregroundStyle(.accent)
+                        .foregroundStyle(Color.accentColor)
 
                     Text(formattedDuration)
                         .font(.caption)

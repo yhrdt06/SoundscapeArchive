@@ -135,11 +135,11 @@ private struct RecordingContentView: View {
 
                     Text(viewModel.isPaused ? "一時停止中" : "録音中")
                         .font(.headline)
-                        .foregroundStyle(viewModel.isPaused ? .secondary : .red)
+                        .foregroundStyle(viewModel.isPaused ? Color.secondary : Color.red)
                 } else {
                     Text("録音準備完了")
                         .font(.headline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.secondary)
                 }
             }
 

@@ -208,13 +208,11 @@ struct RecordDetailView: View {
                     GridItem(.flexible()),
                     GridItem(.flexible())
                 ], spacing: 12) {
-                    if let laeq = analysis.laeq {
-                        DetailItem(
-                            icon: "speaker.wave.2",
-                            label: "LAeq",
-                            value: String(format: "%.1f dB", laeq)
-                        )
-                    }
+                    DetailItem(
+                        icon: "speaker.wave.2",
+                        label: "LAeq",
+                        value: String(format: "%.1f dB", analysis.laeq)
+                    )
 
                     DetailItem(
                         icon: "speaker.wave.3",

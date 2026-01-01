@@ -84,7 +84,7 @@ struct RecordRowView: View {
                     .foregroundStyle(.red)
             case .localOnly:
                 Image(systemName: "icloud.slash")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.secondary)
             }
         }
         .font(.caption)
