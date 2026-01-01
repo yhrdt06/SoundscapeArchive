@@ -67,27 +67,30 @@ struct RecordRowView: View {
         }
     }
 
+    @ViewBuilder
     private var syncStatusIndicator: some View {
-        Group {
-            switch record.syncStatus {
-            case .synced:
-                Image(systemName: "checkmark.icloud")
-                    .foregroundStyle(Color.green)
-            case .pendingUpload:
-                Image(systemName: "arrow.up.icloud")
-                    .foregroundStyle(Color.orange)
-            case .pendingDownload:
-                Image(systemName: "arrow.down.icloud")
-                    .foregroundStyle(Color.blue)
-            case .conflict:
-                Image(systemName: "exclamationmark.icloud")
-                    .foregroundStyle(Color.red)
-            case .localOnly:
-                Image(systemName: "icloud.slash")
-                    .foregroundStyle(Color.secondary)
-            }
+        switch record.syncStatus {
+        case .synced:
+            Image(systemName: "checkmark.icloud")
+                .font(.caption)
+                .foregroundStyle(Color.green)
+        case .pendingUpload:
+            Image(systemName: "arrow.up.icloud")
+                .font(.caption)
+                .foregroundStyle(Color.orange)
+        case .pendingDownload:
+            Image(systemName: "arrow.down.icloud")
+                .font(.caption)
+                .foregroundStyle(Color.blue)
+        case .conflict:
+            Image(systemName: "exclamationmark.icloud")
+                .font(.caption)
+                .foregroundStyle(Color.red)
+        case .localOnly:
+            Image(systemName: "icloud.slash")
+                .font(.caption)
+                .foregroundStyle(Color.secondary)
         }
-        .font(.caption)
     }
 
     // MARK: - Formatters
