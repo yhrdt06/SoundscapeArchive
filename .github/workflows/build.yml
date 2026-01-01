@@ -91,12 +91,13 @@ jobs:
 
       - name: Setup App Store Connect API Key
         env:
-          API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          API_KEY_DOUBLE_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
         run: |
           mkdir -p ~/private_keys
           KEY_FILE="$HOME/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8"
-          printenv API_KEY_BASE64 | base64 --decode > "$KEY_FILE"
-          echo "API key file created at $KEY_FILE"
+          # Double base64 decode (secret is double-encoded to avoid masking issues)
+          printenv API_KEY_DOUBLE_B64 | base64 --decode | base64 --decode > "$KEY_FILE"
+          echo "API key file created"
           ls -la "$HOME/private_keys/"
 
       - name: Build and Archive
