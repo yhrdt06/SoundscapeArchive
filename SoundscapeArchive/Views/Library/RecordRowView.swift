@@ -86,8 +86,8 @@ struct RecordRowView: View {
             Image(systemName: "exclamationmark.icloud")
                 .font(.caption)
                 .foregroundStyle(Color.red)
-        case .localOnly:
-            Image(systemName: "icloud.slash")
+        case .error:
+            Image(systemName: "exclamationmark.triangle")
                 .font(.caption)
                 .foregroundStyle(Color.secondary)
         }
