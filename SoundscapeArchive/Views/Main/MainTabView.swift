@@ -39,20 +39,6 @@ struct MainTabView: View {
 
 // MARK: - Placeholder Views (to be implemented in later phases)
 
-struct RecordingView: View {
-    var body: some View {
-        NavigationStack {
-            VStack {
-                Text("録音画面")
-                    .font(.title)
-                Text("Phase 2で実装予定")
-                    .foregroundStyle(.secondary)
-            }
-            .navigationTitle("録音")
-        }
-    }
-}
-
 struct LibraryView: View {
     var body: some View {
         NavigationStack {
