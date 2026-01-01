@@ -140,9 +140,13 @@ final class RecordingViewModel {
     // MARK: - Private Methods
 
     private func createRecord(audioURL: URL) -> SoundscapeRecord {
+        #if NO_FIREBASE
+        let userId = "preview-user"
+        #else
         guard let userId = AuthManager.shared.userId else {
             fatalError("User not logged in")
         }
+        #endif
 
         let fileSize = (try? FileManager.default.attributesOfItem(atPath: audioURL.path)[.size] as? Int) ?? 0
 

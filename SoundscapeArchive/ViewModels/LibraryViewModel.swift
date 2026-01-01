@@ -101,7 +101,11 @@ final class LibraryViewModel {
     // MARK: - Data Loading
 
     func loadRecords(context: ModelContext) async {
+        #if NO_FIREBASE
+        let userId = "preview-user"
+        #else
         guard let userId = AuthManager.shared.userId else { return }
+        #endif
 
         isLoading = true
         error = nil

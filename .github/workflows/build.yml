@@ -28,14 +28,12 @@ jobs:
 
       - name: Install XcodeGen
         run: |
-          # Install specific version compatible with Xcode 15.4
           brew tap homebrew/cask-versions 2>/dev/null || true
           brew install xcodegen
 
       - name: Generate Xcode project
         run: |
           xcodegen generate --spec project.yml
-          # Fix project format if needed
           if [ -f "SoundscapeArchive.xcodeproj/project.pbxproj" ]; then
             sed -i '' 's/objectVersion = 77;/objectVersion = 56;/g' SoundscapeArchive.xcodeproj/project.pbxproj
           fi
@@ -68,8 +66,8 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             | xcbeautify
 
-  archive:
-    name: Archive for TestFlight
+  deploy-testflight:
+    name: Deploy to TestFlight
     runs-on: macos-14
     needs: build
     if: github.ref == 'refs/heads/main'
@@ -82,40 +80,67 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app
 
       - name: Install XcodeGen
-        run: |
-          brew tap homebrew/cask-versions 2>/dev/null || true
-          brew install xcodegen
+        run: brew install xcodegen
 
       - name: Generate Xcode project
         run: |
           xcodegen generate --spec project.yml
-          # Fix project format if needed
           if [ -f "SoundscapeArchive.xcodeproj/project.pbxproj" ]; then
             sed -i '' 's/objectVersion = 77;/objectVersion = 56;/g' SoundscapeArchive.xcodeproj/project.pbxproj
           fi
 
-      - name: Install Fastlane
-        run: gem install fastlane
+      - name: Setup App Store Connect API Key
+        run: |
+          mkdir -p ~/private_keys
+          echo "${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}" > ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
 
-      # Note: For actual TestFlight deployment, you need to:
-      # 1. Add Apple certificates and provisioning profiles to GitHub Secrets
-      # 2. Configure Fastlane match or manual code signing
-      # 3. Add App Store Connect API key
-
-      - name: Archive (Dry Run)
+      - name: Build and Archive
         run: |
           xcodebuild archive \
             -project SoundscapeArchive.xcodeproj \
             -scheme SoundscapeArchive \
             -configuration Release \
             -archivePath ${{ runner.temp }}/SoundscapeArchive.xcarchive \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            | xcbeautify
+            -destination "generic/platform=iOS" \
+            DEVELOPMENT_TEAM="${{ secrets.DEVELOPMENT_TEAM }}" \
+            CODE_SIGN_STYLE="Automatic" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
+            -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
+            -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
 
-      - name: Upload Archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: SoundscapeArchive
-          path: ${{ runner.temp }}/SoundscapeArchive.xcarchive
+      - name: Export IPA
+        run: |
+          cat > ExportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>teamID</key>
+            <string>${{ secrets.DEVELOPMENT_TEAM }}</string>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>destination</key>
+            <string>upload</string>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild -exportArchive \
+            -archivePath ${{ runner.temp }}/SoundscapeArchive.xcarchive \
+            -exportPath ${{ runner.temp }}/export \
+            -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
+            -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
+            -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+
+      - name: Upload to TestFlight
+        run: |
+          xcrun altool --upload-app \
+            -f ${{ runner.temp }}/export/SoundscapeArchive.ipa \
+            -t ios \
+            --apiKey ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
+            --apiIssuer ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
