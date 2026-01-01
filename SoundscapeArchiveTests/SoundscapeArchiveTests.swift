@@ -78,4 +78,24 @@ final class SoundscapeArchiveTests: XCTestCase {
         XCTAssertTrue(id2.hasPrefix("rec_"))
         XCTAssertNotEqual(id1, id2)
     }
+
+    func testSoundscapeRecordCreation() throws {
+        let metadata = SoundscapeMetadata(
+            title: "Test Recording",
+            recordedAt: Date(),
+            duration: 60.0
+        )
+
+        let record = SoundscapeRecord(
+            userId: "test_user",
+            metadata: metadata
+        )
+
+        XCTAssertTrue(record.id.hasPrefix("rec_"))
+        XCTAssertEqual(record.userId, "test_user")
+        XCTAssertEqual(record.metadata.title, "Test Recording")
+        XCTAssertNil(record.acousticAnalysis)
+        XCTAssertNil(record.evaluation)
+        XCTAssertEqual(record.syncStatus, .pendingUpload)
+    }
 }

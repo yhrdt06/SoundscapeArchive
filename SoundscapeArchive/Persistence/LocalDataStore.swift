@@ -48,8 +48,8 @@ final class LocalDataStore {
     }
 
     /// Save a new record
-    func saveRecord(_ record: SoundscapeRecord, userId: String, localAudioPath: String) throws {
-        let localRecord = try LocalSoundscapeRecord.from(record, userId: userId, localAudioPath: localAudioPath)
+    func saveRecord(_ record: SoundscapeRecord, localAudioPath: String) throws {
+        let localRecord = try LocalSoundscapeRecord.from(record, localAudioPath: localAudioPath)
         modelContext.insert(localRecord)
         try modelContext.save()
     }
@@ -67,8 +67,9 @@ final class LocalDataStore {
 
         let encoder = JSONEncoder()
         localRecord.metadataJSON = try encoder.encode(record.metadata)
-        localRecord.analysisJSON = record.analysis != nil ? try encoder.encode(record.analysis) : nil
+        localRecord.analysisJSON = record.acousticAnalysis != nil ? try encoder.encode(record.acousticAnalysis) : nil
         localRecord.waveformPreviewJSON = record.waveformPreview != nil ? try encoder.encode(record.waveformPreview) : nil
+        localRecord.evaluationJSON = record.evaluation != nil ? try encoder.encode(record.evaluation) : nil
         localRecord.remoteAudioPath = record.audioFilePath
         localRecord.syncStatusRaw = record.syncStatus.rawValue
         localRecord.updatedAt = Date()

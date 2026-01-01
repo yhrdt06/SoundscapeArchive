@@ -95,8 +95,8 @@ final class RecordingViewModel {
             let record = createRecord(audioURL: url)
 
             // Save to local storage
-            if let context = modelContext, let userId = AuthManager.shared.userId {
-                try await saveRecord(record, userId: userId, audioPath: url.path, context: context)
+            if let context = modelContext {
+                try await saveRecord(record, audioPath: url.path, context: context)
             }
 
             recordingState = .completed(record)
@@ -140,6 +140,10 @@ final class RecordingViewModel {
     // MARK: - Private Methods
 
     private func createRecord(audioURL: URL) -> SoundscapeRecord {
+        guard let userId = AuthManager.shared.userId else {
+            fatalError("User not logged in")
+        }
+
         let fileSize = (try? FileManager.default.attributesOfItem(atPath: audioURL.path)[.size] as? Int) ?? 0
 
         let location = capturedLocation ?? GeoLocation(latitude: 0, longitude: 0)
@@ -168,8 +172,10 @@ final class RecordingViewModel {
 
         return SoundscapeRecord(
             id: SoundscapeRecord.generateId(),
+            userId: userId,
             metadata: metadata,
-            analysis: nil,
+            acousticAnalysis: nil,
+            evaluation: nil,
             audioFilePath: nil,
             waveformPreview: normalizedWaveform.map { Double($0) },
             createdAt: Date(),
@@ -178,8 +184,8 @@ final class RecordingViewModel {
         )
     }
 
-    private func saveRecord(_ record: SoundscapeRecord, userId: String, audioPath: String, context: ModelContext) async throws {
-        let localRecord = try LocalSoundscapeRecord.from(record, userId: userId, localAudioPath: audioPath)
+    private func saveRecord(_ record: SoundscapeRecord, audioPath: String, context: ModelContext) async throws {
+        let localRecord = try LocalSoundscapeRecord.from(record, localAudioPath: audioPath)
         context.insert(localRecord)
         try context.save()
     }

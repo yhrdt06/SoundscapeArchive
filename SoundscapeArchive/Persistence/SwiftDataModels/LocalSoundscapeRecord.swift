@@ -25,6 +25,9 @@ final class LocalSoundscapeRecord {
     /// Waveform preview data stored as JSON
     var waveformPreviewJSON: Data?
 
+    /// Evaluation stored as JSON (optional)
+    var evaluationJSON: Data?
+
     /// Sync status raw value
     var syncStatusRaw: String
 
@@ -45,6 +48,7 @@ final class LocalSoundscapeRecord {
         localAudioPath: String,
         remoteAudioPath: String? = nil,
         waveformPreviewJSON: Data? = nil,
+        evaluationJSON: Data? = nil,
         syncStatusRaw: String = SyncStatus.pendingUpload.rawValue,
         remoteVersion: Int = 0,
         createdAt: Date = Date(),
@@ -57,6 +61,7 @@ final class LocalSoundscapeRecord {
         self.localAudioPath = localAudioPath
         self.remoteAudioPath = remoteAudioPath
         self.waveformPreviewJSON = waveformPreviewJSON
+        self.evaluationJSON = evaluationJSON
         self.syncStatusRaw = syncStatusRaw
         self.remoteVersion = remoteVersion
         self.createdAt = createdAt
@@ -83,6 +88,12 @@ extension LocalSoundscapeRecord {
         return try? JSONDecoder().decode([Double].self, from: data)
     }
 
+    /// Decoded evaluation
+    var evaluation: SubjectiveEvaluation? {
+        guard let data = evaluationJSON else { return nil }
+        return try? JSONDecoder().decode(SubjectiveEvaluation.self, from: data)
+    }
+
     /// Sync status enum
     var syncStatus: SyncStatus {
         get { SyncStatus(rawValue: syncStatusRaw) ?? .pendingUpload }
@@ -93,20 +104,22 @@ extension LocalSoundscapeRecord {
 // MARK: - Conversion Methods
 extension LocalSoundscapeRecord {
     /// Create from SoundscapeRecord
-    static func from(_ record: SoundscapeRecord, userId: String, localAudioPath: String) throws -> LocalSoundscapeRecord {
+    static func from(_ record: SoundscapeRecord, localAudioPath: String) throws -> LocalSoundscapeRecord {
         let encoder = JSONEncoder()
         let metadataJSON = try encoder.encode(record.metadata)
-        let analysisJSON = record.analysis != nil ? try encoder.encode(record.analysis) : nil
+        let analysisJSON = record.acousticAnalysis != nil ? try encoder.encode(record.acousticAnalysis) : nil
         let waveformJSON = record.waveformPreview != nil ? try encoder.encode(record.waveformPreview) : nil
+        let evaluationJSON = record.evaluation != nil ? try encoder.encode(record.evaluation) : nil
 
         return LocalSoundscapeRecord(
             id: record.id,
-            userId: userId,
+            userId: record.userId,
             metadataJSON: metadataJSON,
             analysisJSON: analysisJSON,
             localAudioPath: localAudioPath,
             remoteAudioPath: record.audioFilePath,
             waveformPreviewJSON: waveformJSON,
+            evaluationJSON: evaluationJSON,
             syncStatusRaw: record.syncStatus.rawValue,
             createdAt: record.createdAt,
             updatedAt: record.updatedAt
@@ -119,8 +132,10 @@ extension LocalSoundscapeRecord {
 
         return SoundscapeRecord(
             id: id,
+            userId: userId,
             metadata: metadata,
-            analysis: analysis,
+            acousticAnalysis: analysis,
+            evaluation: evaluation,
             audioFilePath: remoteAudioPath,
             waveformPreview: waveformPreview,
             createdAt: createdAt,

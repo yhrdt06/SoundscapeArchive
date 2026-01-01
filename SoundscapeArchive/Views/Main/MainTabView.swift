@@ -39,20 +39,6 @@ struct MainTabView: View {
 
 // MARK: - Placeholder Views (to be implemented in later phases)
 
-struct LibraryView: View {
-    var body: some View {
-        NavigationStack {
-            VStack {
-                Text("ライブラリ画面")
-                    .font(.title)
-                Text("Phase 3で実装予定")
-                    .foregroundStyle(.secondary)
-            }
-            .navigationTitle("ライブラリ")
-        }
-    }
-}
-
 struct InsightsView: View {
     var body: some View {
         NavigationStack {

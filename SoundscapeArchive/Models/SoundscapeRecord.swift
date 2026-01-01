@@ -5,11 +5,17 @@ struct SoundscapeRecord: Codable, Identifiable, Equatable {
     /// Unique identifier (format: "rec_timestamp_hex8")
     let id: String
 
+    /// User ID
+    let userId: String
+
     /// Recording metadata
     var metadata: SoundscapeMetadata
 
     /// Acoustic analysis results (populated after server processing)
-    var analysis: AcousticAnalysis?
+    var acousticAnalysis: AcousticAnalysis?
+
+    /// Subjective evaluation (populated after user evaluation)
+    var evaluation: SubjectiveEvaluation?
 
     /// Path to audio file in Firebase Storage
     var audioFilePath: String?
@@ -27,7 +33,9 @@ struct SoundscapeRecord: Codable, Identifiable, Equatable {
     var syncStatus: SyncStatus
 
     enum CodingKeys: String, CodingKey {
-        case id, metadata, analysis
+        case id, metadata, evaluation
+        case userId = "user_id"
+        case acousticAnalysis = "acoustic_analysis"
         case audioFilePath = "audio_file_path"
         case waveformPreview = "waveform_preview"
         case createdAt = "created_at"
@@ -37,8 +45,10 @@ struct SoundscapeRecord: Codable, Identifiable, Equatable {
 
     init(
         id: String = SoundscapeRecord.generateId(),
+        userId: String,
         metadata: SoundscapeMetadata,
-        analysis: AcousticAnalysis? = nil,
+        acousticAnalysis: AcousticAnalysis? = nil,
+        evaluation: SubjectiveEvaluation? = nil,
         audioFilePath: String? = nil,
         waveformPreview: [Double]? = nil,
         createdAt: Date = Date(),
@@ -46,8 +56,10 @@ struct SoundscapeRecord: Codable, Identifiable, Equatable {
         syncStatus: SyncStatus = .pendingUpload
     ) {
         self.id = id
+        self.userId = userId
         self.metadata = metadata
-        self.analysis = analysis
+        self.acousticAnalysis = acousticAnalysis
+        self.evaluation = evaluation
         self.audioFilePath = audioFilePath
         self.waveformPreview = waveformPreview
         self.createdAt = createdAt
@@ -64,12 +76,17 @@ struct SoundscapeRecord: Codable, Identifiable, Equatable {
 
     /// Check if this record has been analyzed
     var hasAnalysis: Bool {
-        analysis != nil
+        acousticAnalysis != nil
     }
 
     /// Get LAeq value if available
     var laeq: Double? {
-        analysis?.laeq
+        acousticAnalysis?.laeq
+    }
+
+    /// Check if this record has evaluation
+    var hasEvaluation: Bool {
+        evaluation != nil
     }
 }
 
