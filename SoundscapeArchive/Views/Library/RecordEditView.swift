@@ -118,7 +118,7 @@ struct RecordEditView: View {
                 HStack {
                     Text("機器")
                     Spacer()
-                    Text(record.metadata.equipment.deviceModel)
+                    Text(record.metadata.equipment?.deviceModel ?? "不明な機器")
                         .foregroundStyle(.secondary)
                 }
 
@@ -182,15 +182,15 @@ struct RecordEditView: View {
                 let updatedMetadata = SoundscapeMetadata(
                     title: title,
                     description: description.isEmpty ? nil : description,
+                    location: record.metadata.location,
                     recordedAt: record.metadata.recordedAt,
                     duration: record.metadata.duration,
                     sampleRate: record.metadata.sampleRate,
                     channels: record.metadata.channels,
                     bitDepth: record.metadata.bitDepth,
-                    location: record.metadata.location,
+                    tags: tags,
                     locationName: locationName.isEmpty ? nil : locationName,
-                    equipment: record.metadata.equipment,
-                    tags: tags
+                    equipment: record.metadata.equipment
                 )
 
                 // Create updated record

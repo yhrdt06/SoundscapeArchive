@@ -52,8 +52,8 @@ struct RecordDetailView: View {
         .task {
             await MainActor.run {
                 audioPlayer = AudioPlayer()
+                loadAudio()
             }
-            loadAudio()
         }
         .onDisappear {
             audioPlayer?.stop()
@@ -70,6 +70,7 @@ struct RecordDetailView: View {
 
     // MARK: - Load Audio
 
+    @MainActor
     private func loadAudio() {
         guard let audioPlayer = audioPlayer else { return }
         do {
@@ -117,7 +118,7 @@ struct RecordDetailView: View {
                 DetailItem(
                     icon: "iphone",
                     label: "機器",
-                    value: record.metadata.equipment.deviceModel
+                    value: record.metadata.equipment?.deviceModel ?? "不明な機器"
                 )
             }
 
@@ -215,29 +216,23 @@ struct RecordDetailView: View {
                         )
                     }
 
-                    if let lamax = analysis.lamax {
-                        DetailItem(
-                            icon: "speaker.wave.3",
-                            label: "LAmax",
-                            value: String(format: "%.1f dB", lamax)
-                        )
-                    }
+                    DetailItem(
+                        icon: "speaker.wave.3",
+                        label: "Lmax",
+                        value: String(format: "%.1f dB", analysis.lmax)
+                    )
 
-                    if let lamin = analysis.lamin {
-                        DetailItem(
-                            icon: "speaker.wave.1",
-                            label: "LAmin",
-                            value: String(format: "%.1f dB", lamin)
-                        )
-                    }
+                    DetailItem(
+                        icon: "speaker.wave.1",
+                        label: "Lmin",
+                        value: String(format: "%.1f dB", analysis.lmin)
+                    )
 
-                    if let la10 = analysis.la10 {
-                        DetailItem(
-                            icon: "chart.bar",
-                            label: "LA10",
-                            value: String(format: "%.1f dB", la10)
-                        )
-                    }
+                    DetailItem(
+                        icon: "chart.bar",
+                        label: "L10",
+                        value: String(format: "%.1f dB", analysis.l10)
+                    )
                 }
             }
         }

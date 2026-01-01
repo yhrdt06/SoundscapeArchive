@@ -30,8 +30,9 @@ struct RecordingView: View {
 }
 
 /// Inner content view that uses the ViewModel
+@MainActor
 private struct RecordingContentView: View {
-    @Bindable var viewModel: RecordingViewModel
+    var viewModel: RecordingViewModel
     let modelContext: ModelContext
     @Binding var showMetadataEdit: Bool
     @Binding var completedRecord: SoundscapeRecord?

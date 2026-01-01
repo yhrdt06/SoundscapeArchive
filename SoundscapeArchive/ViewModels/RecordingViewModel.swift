@@ -39,14 +39,28 @@ final class RecordingViewModel {
 
     // MARK: - Recording State
 
-    enum RecordingState {
+    enum RecordingState: Equatable {
         case idle
         case preparing
         case recording
         case paused
         case processing
         case completed(SoundscapeRecord)
-        case error(Error)
+        case error(String)
+
+        static func == (lhs: RecordingState, rhs: RecordingState) -> Bool {
+            switch (lhs, rhs) {
+            case (.idle, .idle), (.preparing, .preparing), (.recording, .recording),
+                 (.paused, .paused), (.processing, .processing):
+                return true
+            case (.completed(let l), .completed(let r)):
+                return l.id == r.id
+            case (.error(let l), .error(let r)):
+                return l == r
+            default:
+                return false
+            }
+        }
     }
 
     // MARK: - Init
@@ -81,7 +95,7 @@ final class RecordingViewModel {
         } catch {
             self.error = error
             self.showError = true
-            recordingState = .error(error)
+            recordingState = .error(error.localizedDescription)
         }
     }
 
@@ -104,7 +118,7 @@ final class RecordingViewModel {
         } catch {
             self.error = error
             self.showError = true
-            recordingState = .error(error)
+            recordingState = .error(error.localizedDescription)
         }
     }
 

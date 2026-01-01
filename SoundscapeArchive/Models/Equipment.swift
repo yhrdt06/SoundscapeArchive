@@ -36,4 +36,15 @@ struct Equipment: Codable, Equatable {
         microphone != nil || recorder != nil || preamp != nil ||
         calibration != nil || other != nil
     }
+
+    /// Device model string for display
+    var deviceModel: String {
+        if let mic = microphone, !mic.isEmpty {
+            return mic
+        }
+        if let rec = recorder, !rec.isEmpty {
+            return rec
+        }
+        return "不明な機器"
+    }
 }

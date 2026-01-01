@@ -63,7 +63,7 @@ struct RecordRowView: View {
 
             Image(systemName: "waveform")
                 .font(.title2)
-                .foregroundStyle(.accent)
+                .foregroundStyle(Color.accentColor)
         }
     }
 

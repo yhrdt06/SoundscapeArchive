@@ -285,8 +285,9 @@ final class RecordingManager: NSObject {
 
     private func startDurationTimer() {
         durationTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                guard let self = self, let startTime = self.startTime else { return }
+            guard let self = self else { return }
+            Task { @MainActor [startTime = self.startTime] in
+                guard let startTime = startTime else { return }
                 self.duration = Date().timeIntervalSince(startTime)
             }
         }
