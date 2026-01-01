@@ -55,6 +55,11 @@ struct InsightsView: View {
 
 struct SettingsView: View {
     @EnvironmentObject var authManager: AuthManager
+    @Environment(\.modelContext) private var modelContext
+    @State private var syncManager = SyncManager.shared
+    @State private var isSyncing = false
+    @State private var showingSyncError = false
+    @State private var syncError: Error?
 
     var body: some View {
         NavigationStack {
@@ -82,10 +87,50 @@ struct SettingsView: View {
 
                 // Sync section
                 Section("同期") {
+                    // Sync status
                     HStack {
                         Text("同期状態")
                         Spacer()
-                        Text("Phase 5で実装予定")
+                        if isSyncing {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        } else if syncManager.pendingCount > 0 {
+                            Text("\(syncManager.pendingCount)件の未同期")
+                                .foregroundStyle(.orange)
+                        } else {
+                            Text("同期済み")
+                                .foregroundStyle(.green)
+                        }
+                    }
+
+                    // Last sync date
+                    if let lastSync = syncManager.lastSyncDate {
+                        HStack {
+                            Text("最終同期")
+                            Spacer()
+                            Text(formatDate(lastSync))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    // Sync button
+                    Button {
+                        performSync()
+                    } label: {
+                        HStack {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                            Text("今すぐ同期")
+                        }
+                    }
+                    .disabled(isSyncing)
+                }
+
+                // App info
+                Section("アプリ情報") {
+                    HStack {
+                        Text("バージョン")
+                        Spacer()
+                        Text("1.0.0")
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -104,7 +149,38 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("設定")
+            .onAppear {
+                syncManager.updatePendingCount(context: modelContext)
+            }
+            .alert("同期エラー", isPresented: $showingSyncError) {
+                Button("OK") {}
+            } message: {
+                if let error = syncError {
+                    Text(error.localizedDescription)
+                }
+            }
         }
+    }
+
+    private func performSync() {
+        isSyncing = true
+
+        Task {
+            do {
+                try await syncManager.sync(context: modelContext)
+            } catch {
+                syncError = error
+                showingSyncError = true
+            }
+            isSyncing = false
+        }
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
     }
 }
 

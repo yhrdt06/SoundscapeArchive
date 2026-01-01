@@ -8,6 +8,7 @@ struct SoundscapeArchiveApp: App {
 
     init() {
         FirebaseApp.configure()
+        configureSyncManager()
     }
 
     var body: some Scene {
@@ -19,5 +20,14 @@ struct SoundscapeArchiveApp: App {
             LocalSoundscapeRecord.self,
             LocalEvaluation.self
         ])
+    }
+
+    private func configureSyncManager() {
+        let firestoreClient = FirestoreClient()
+        let storageClient = StorageClient()
+        SyncManager.shared.configure(
+            firestoreClient: firestoreClient,
+            storageClient: storageClient
+        )
     }
 }

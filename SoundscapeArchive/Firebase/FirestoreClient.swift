@@ -55,6 +55,11 @@ final class FirestoreClient {
         }
     }
 
+    /// Fetch records for sync (alias for fetchRecordsUpdatedSince)
+    func fetchRecords(userId: String, since: Date) async throws -> [SoundscapeRecord] {
+        try await fetchRecordsUpdatedSince(since, userId: userId)
+    }
+
     /// Update a record
     func updateRecord(_ record: SoundscapeRecord) async throws {
         let docRef = db.collection("soundscapes").document(record.id)

@@ -110,4 +110,24 @@ final class StorageClient {
             return false
         }
     }
+
+    // MARK: - Sync Operations
+
+    /// Upload audio and return storage path (not download URL)
+    func uploadAudio(localURL: URL, recordId: String, userId: String) async throws -> String {
+        let path = "users/\(userId)/soundscapes/\(recordId)/audio.wav"
+        let storageRef = storage.reference().child(path)
+
+        let metadata = StorageMetadata()
+        metadata.contentType = "audio/wav"
+
+        _ = try await storageRef.putFileAsync(from: localURL, metadata: metadata)
+        return path
+    }
+
+    /// Download audio from storage path
+    func downloadAudio(remotePath: String, to localURL: URL) async throws {
+        let storageRef = storage.reference().child(remotePath)
+        _ = try await storageRef.writeAsync(toFile: localURL)
+    }
 }
