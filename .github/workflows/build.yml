@@ -91,18 +91,12 @@ jobs:
 
       - name: Setup App Store Connect API Key
         env:
-          API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
         run: |
           mkdir -p ~/private_keys
-          # Try base64 decode first, if it fails, use the content directly (raw .p8 format)
-          if echo -n "$API_KEY_CONTENT" | base64 -D > ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 2>/dev/null; then
-            echo "Successfully decoded base64 API key"
-          else
-            echo "Using raw API key content"
-            printf '%s\n' "$API_KEY_CONTENT" > ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
-          fi
-          # Verify the key file was created and has correct format
-          head -1 ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
+          printenv API_KEY_BASE64 | base64 --decode > ~/private_keys/AuthKey_${KEY_ID}.p8
+          echo "API key file created"
 
       - name: Build and Archive
         run: |
