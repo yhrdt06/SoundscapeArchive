@@ -3,7 +3,8 @@ options:
   bundleIdPrefix: com.soundscape
   deploymentTarget:
     iOS: "17.0"
-  xcodeVersion: "15.0"
+  xcodeVersion: "15.4"
+  minimumXcodeGenVersion: "2.38.0"
   generateEmptyDirectories: true
 
 settings:

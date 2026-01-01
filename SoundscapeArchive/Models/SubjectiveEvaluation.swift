@@ -109,7 +109,6 @@ struct SubjectiveEvaluation: Codable, Identifiable, Equatable {
     mutating func recalculateMetrics() {
         self.isoMetrics = ISOMetricsCalculator.calculate(from: paqScores)
         self.sourceMetrics = SourceMetricsCalculator.calculate(from: soundSources)
-        self.updatedAt = Date()
     }
 }
 
