@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import SwiftData
+import CoreLocation
 
 /// ViewModel for recording screen
 @MainActor

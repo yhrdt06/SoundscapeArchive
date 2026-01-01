@@ -5,6 +5,8 @@ import Combine
 /// Authentication state manager
 @MainActor
 final class AuthManager: ObservableObject {
+    static let shared = AuthManager()
+
     @Published private(set) var currentUser: User?
     @Published private(set) var isAuthenticated = false
     @Published private(set) var isLoading = true

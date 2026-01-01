@@ -76,7 +76,7 @@ private struct SourceSliderView: View {
             HStack {
                 Image(systemName: icon)
                     .font(.caption)
-                    .foregroundStyle(.accent)
+                    .foregroundStyle(.accentColor)
                     .frame(width: 20)
 
                 Text(label)
