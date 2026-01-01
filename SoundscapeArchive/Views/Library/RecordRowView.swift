@@ -72,16 +72,16 @@ struct RecordRowView: View {
             switch record.syncStatus {
             case .synced:
                 Image(systemName: "checkmark.icloud")
-                    .foregroundStyle(.green)
+                    .foregroundStyle(Color.green)
             case .pendingUpload:
                 Image(systemName: "arrow.up.icloud")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.orange)
             case .pendingDownload:
                 Image(systemName: "arrow.down.icloud")
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Color.blue)
             case .conflict:
                 Image(systemName: "exclamationmark.icloud")
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Color.red)
             case .localOnly:
                 Image(systemName: "icloud.slash")
                     .foregroundStyle(Color.secondary)
