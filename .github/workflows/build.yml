@@ -94,28 +94,37 @@ jobs:
           API_KEY_DOUBLE_B64: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
         run: |
           mkdir -p ~/private_keys
-          KEY_FILE="$HOME/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8"
+          # Use a fixed filename to avoid masking issues with KEY_ID
+          KEY_FILE="$HOME/private_keys/api_key.p8"
           # Double base64 decode (secret is double-encoded to avoid masking issues)
           printenv API_KEY_DOUBLE_B64 | base64 --decode | base64 --decode > "$KEY_FILE"
           echo "API key file created"
           ls -la "$HOME/private_keys/"
 
       - name: Build and Archive
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          DEV_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
         run: |
           xcodebuild archive \
             -project SoundscapeArchive.xcodeproj \
             -scheme SoundscapeArchive \
             -configuration Release \
-            -archivePath ${{ runner.temp }}/SoundscapeArchive.xcarchive \
+            -archivePath "${{ runner.temp }}/SoundscapeArchive.xcarchive" \
             -destination "generic/platform=iOS" \
-            DEVELOPMENT_TEAM="${{ secrets.DEVELOPMENT_TEAM }}" \
+            DEVELOPMENT_TEAM="$DEV_TEAM" \
             CODE_SIGN_STYLE="Automatic" \
             -allowProvisioningUpdates \
-            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
-            -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
-            -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+            -authenticationKeyPath ~/private_keys/api_key.p8 \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
 
       - name: Export IPA
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          DEV_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
         run: |
           cat > ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
@@ -125,7 +134,7 @@ jobs:
             <key>method</key>
             <string>app-store-connect</string>
             <key>teamID</key>
-            <string>${{ secrets.DEVELOPMENT_TEAM }}</string>
+            <string>$DEV_TEAM</string>
             <key>uploadSymbols</key>
             <true/>
             <key>destination</key>
@@ -135,18 +144,21 @@ jobs:
           EOF
 
           xcodebuild -exportArchive \
-            -archivePath ${{ runner.temp }}/SoundscapeArchive.xcarchive \
-            -exportPath ${{ runner.temp }}/export \
+            -archivePath "${{ runner.temp }}/SoundscapeArchive.xcarchive" \
+            -exportPath "${{ runner.temp }}/export" \
             -exportOptionsPlist ExportOptions.plist \
             -allowProvisioningUpdates \
-            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
-            -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
-            -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+            -authenticationKeyPath ~/private_keys/api_key.p8 \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
 
       - name: Upload to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           xcrun altool --upload-app \
-            -f ${{ runner.temp }}/export/SoundscapeArchive.ipa \
+            -f "${{ runner.temp }}/export/SoundscapeArchive.ipa" \
             -t ios \
-            --apiKey ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
-            --apiIssuer ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID"
