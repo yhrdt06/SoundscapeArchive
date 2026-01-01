@@ -1,0 +1,17 @@
+# App Store Connect情報
+# 実際の値は環境変数またはシークレットから設定してください
+
+app_identifier ENV["APP_IDENTIFIER"] || "com.example.soundscape-archive"
+apple_id ENV["APPLE_ID"] || "your-apple-id@example.com"
+team_id ENV["TEAM_ID"] || "XXXXXXXXXX"
+
+# App Store Connect API Key（推奨）
+# https://docs.fastlane.tools/app-store-connect-api/
+#
+# 以下のいずれかの方法で認証：
+# 1. 環境変数: APP_STORE_CONNECT_API_KEY_KEY_ID, APP_STORE_CONNECT_API_KEY_ISSUER_ID, APP_STORE_CONNECT_API_KEY_KEY
+# 2. api_key パラメータ
+# 3. Fastfile での api_key_path
+
+# iTunes Connect Team (複数チームがある場合)
+itc_team_id ENV["ITC_TEAM_ID"]

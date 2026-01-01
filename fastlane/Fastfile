@@ -1,0 +1,78 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build and upload to TestFlight"
+  lane :beta do
+    # Ensure clean state
+    ensure_git_status_clean
+
+    # Generate Xcode project
+    sh "cd .. && xcodegen generate"
+
+    # Install dependencies
+    cocoapods(try_repo_update_on_error: true) if File.exist?("../Podfile")
+
+    # Increment build number
+    increment_build_number(
+      xcodeproj: "SoundscapeArchive.xcodeproj"
+    )
+
+    # Build and sign
+    build_app(
+      project: "SoundscapeArchive.xcodeproj",
+      scheme: "SoundscapeArchive",
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "./build",
+      output_name: "SoundscapeArchive.ipa"
+    )
+
+    # Upload to TestFlight
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      apple_id: ENV["APP_STORE_APPLE_ID"]
+    )
+
+    # Commit version bump
+    commit_version_bump(
+      xcodeproj: "SoundscapeArchive.xcodeproj",
+      message: "Bump build number for TestFlight [ci skip]"
+    )
+
+    # Push to remote
+    push_to_git_remote
+  end
+
+  desc "Build for simulator (no signing)"
+  lane :build_simulator do
+    sh "cd .. && xcodegen generate"
+
+    xcodebuild(
+      project: "SoundscapeArchive.xcodeproj",
+      scheme: "SoundscapeArchive",
+      configuration: "Debug",
+      destination: "platform=iOS Simulator,name=iPhone 15",
+      build: true
+    )
+  end
+
+  desc "Run tests"
+  lane :test do
+    sh "cd .. && xcodegen generate"
+
+    run_tests(
+      project: "SoundscapeArchive.xcodeproj",
+      scheme: "SoundscapeArchive",
+      device: "iPhone 15",
+      code_coverage: true
+    )
+  end
+
+  desc "Sync code signing with match"
+  lane :sync_code_signing do
+    match(
+      type: "appstore",
+      readonly: is_ci
+    )
+  end
+end
