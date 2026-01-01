@@ -1,0 +1,106 @@
+name: iOS Build & Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  XCODE_VERSION: "15.4"
+  IOS_SIMULATOR: "iPhone 15"
+  IOS_VERSION: "17.5"
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Resolve Swift packages
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project SoundscapeArchive.xcodeproj \
+            -scheme SoundscapeArchive
+
+      - name: Build for iOS Simulator
+        run: |
+          xcodebuild build \
+            -project SoundscapeArchive.xcodeproj \
+            -scheme SoundscapeArchive \
+            -destination "platform=iOS Simulator,name=${{ env.IOS_SIMULATOR }},OS=${{ env.IOS_VERSION }}" \
+            -configuration Debug \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            | xcbeautify
+
+      - name: Run Tests
+        run: |
+          xcodebuild test \
+            -project SoundscapeArchive.xcodeproj \
+            -scheme SoundscapeArchive \
+            -destination "platform=iOS Simulator,name=${{ env.IOS_SIMULATOR }},OS=${{ env.IOS_VERSION }}" \
+            -configuration Debug \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            | xcbeautify
+
+  archive:
+    name: Archive for TestFlight
+    runs-on: macos-14
+    needs: build
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Install Fastlane
+        run: gem install fastlane
+
+      # Note: For actual TestFlight deployment, you need to:
+      # 1. Add Apple certificates and provisioning profiles to GitHub Secrets
+      # 2. Configure Fastlane match or manual code signing
+      # 3. Add App Store Connect API key
+
+      - name: Archive (Dry Run)
+        run: |
+          xcodebuild archive \
+            -project SoundscapeArchive.xcodeproj \
+            -scheme SoundscapeArchive \
+            -configuration Release \
+            -archivePath ${{ runner.temp }}/SoundscapeArchive.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcbeautify
+
+      - name: Upload Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: SoundscapeArchive
+          path: ${{ runner.temp }}/SoundscapeArchive.xcarchive
