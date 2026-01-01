@@ -445,15 +445,14 @@ struct EvaluationSummaryView: View {
             metadata: SoundscapeMetadata(
                 title: "渋谷駅前の音風景",
                 description: "朝のラッシュ時間帯の録音。人の往来が多く、電車の音も聞こえる。",
+                location: GeoLocation(latitude: 35.6580, longitude: 139.7016),
                 recordedAt: Date(),
                 duration: 185,
-                location: GeoLocation(latitude: 35.6580, longitude: 139.7016),
+                tags: ["都市", "駅", "雑踏", "朝"],
                 locationName: "渋谷区渋谷2丁目",
                 equipment: Equipment(
-                    deviceModel: "iPhone 15 Pro",
                     microphoneType: "内蔵マイク"
-                ),
-                tags: ["都市", "駅", "雑踏", "朝"]
+                )
             ),
             syncStatus: .synced
         ))

@@ -125,14 +125,20 @@ private struct PAQItemView: View {
     }
 }
 
-#Preview {
-    @Previewable @State var scores = PAQScores(
+struct PAQInputViewPreview: View {
+    @State private var scores = PAQScores(
         pleasant: 4, chaotic: 2, vibrant: 3, uneventful: 2,
         calm: 4, annoying: 2, eventful: 3, monotonous: 2
     )
 
-    return ScrollView {
-        PAQInputView(paqScores: $scores)
-            .padding()
+    var body: some View {
+        ScrollView {
+            PAQInputView(paqScores: $scores)
+                .padding()
+        }
     }
+}
+
+#Preview {
+    PAQInputViewPreview()
 }

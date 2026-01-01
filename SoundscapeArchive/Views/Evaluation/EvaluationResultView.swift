@@ -122,27 +122,23 @@ struct EvaluationResultView: View {
 
                 Divider()
 
-                // Source ratios
+                // Natural ratio
                 SourceRatioBar(
                     label: "自然音",
                     ratio: sourceMetrics.naturalRatio,
                     color: .green
                 )
-                SourceRatioBar(
-                    label: "人の音",
-                    ratio: sourceMetrics.humanRatio,
-                    color: .orange
-                )
-                SourceRatioBar(
-                    label: "交通音",
-                    ratio: sourceMetrics.trafficRatio,
-                    color: .red
-                )
-                SourceRatioBar(
-                    label: "その他",
-                    ratio: sourceMetrics.otherRatio,
-                    color: .blue
-                )
+
+                // Source entropy
+                HStack {
+                    Text("音源エントロピー")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(String(format: "%.2f", sourceMetrics.sourceEntropy))
+                        .font(.caption)
+                        .fontWeight(.medium)
+                }
             }
         }
         .padding()
@@ -194,7 +190,7 @@ struct EvaluationResultView: View {
         // Source interpretation
         if sourceMetrics.naturalRatio > 0.5 {
             text += "\n\n自然音が支配的であり、一般的に心地よいと感じられる音環境です。"
-        } else if sourceMetrics.trafficRatio > 0.5 {
+        } else if sourceMetrics.sourceDominant == "traffic" {
             text += "\n\n交通音が支配的であり、都市的な音環境の特徴を持っています。"
         }
 
@@ -298,11 +294,9 @@ private struct SourceRatioBar: View {
             quadrant: .vibrant
         ),
         sourceMetrics: SourceMetrics(
+            sourceDominant: "natural",
             naturalRatio: 0.45,
-            humanRatio: 0.25,
-            trafficRatio: 0.20,
-            otherRatio: 0.10,
-            sourceDominant: "natural"
+            sourceEntropy: 0.85
         )
     )
 }
