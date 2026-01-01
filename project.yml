@@ -76,7 +76,7 @@ targets:
 packages:
   firebase-ios-sdk:
     url: https://github.com/firebase/firebase-ios-sdk
-    from: "11.0.0"
+    exactVersion: "10.29.0"
 
 schemes:
   SoundscapeArchive:
