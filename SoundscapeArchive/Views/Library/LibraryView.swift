@@ -240,14 +240,16 @@ private struct LibraryContentView: View {
     }
 
     private var noResultsState: some View {
-        ContentUnavailableView(
-            "該当する録音がありません",
-            systemImage: "magnifyingglass",
-            description: Text("検索条件を変更してください")
-        ) {
+        VStack(spacing: 16) {
+            ContentUnavailableView(
+                "該当する録音がありません",
+                systemImage: "magnifyingglass",
+                description: Text("検索条件を変更してください")
+            )
             Button("検索をクリア") {
                 viewModel.clearSearch()
             }
+            .buttonStyle(.borderedProminent)
         }
     }
 }

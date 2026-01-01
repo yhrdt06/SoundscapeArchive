@@ -76,8 +76,8 @@ extension LocalEvaluation {
             userId: userId,
             evaluationJSON: evaluationJSON,
             syncStatusRaw: evaluation.syncStatus.rawValue,
-            createdAt: evaluation.createdAt,
-            updatedAt: evaluation.updatedAt
+            createdAt: evaluation.evaluatedAt,
+            updatedAt: evaluation.evaluatedAt
         )
     }
 
