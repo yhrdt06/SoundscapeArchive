@@ -101,10 +101,8 @@ jobs:
           echo "API key file created"
           ls -la "$HOME/private_keys/"
 
-      - name: Build and Archive
+      - name: Build and Archive (unsigned)
         env:
-          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           DEV_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
         run: |
           xcodebuild archive \
@@ -114,34 +112,32 @@ jobs:
             -archivePath "${{ runner.temp }}/SoundscapeArchive.xcarchive" \
             -destination "generic/platform=iOS" \
             DEVELOPMENT_TEAM="$DEV_TEAM" \
-            CODE_SIGN_STYLE="Automatic" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath ~/private_keys/api_key.p8 \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
 
-      - name: Export IPA
+      - name: Export and Sign IPA
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           DEV_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
         run: |
-          cat > ExportOptions.plist << EOF
+          cat > ExportOptions.plist << 'PLISTEOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
             <key>method</key>
             <string>app-store-connect</string>
-            <key>teamID</key>
-            <string>$DEV_TEAM</string>
+            <key>signingStyle</key>
+            <string>automatic</string>
             <key>uploadSymbols</key>
             <true/>
             <key>destination</key>
-            <string>upload</string>
+            <string>export</string>
           </dict>
           </plist>
-          EOF
+          PLISTEOF
 
           xcodebuild -exportArchive \
             -archivePath "${{ runner.temp }}/SoundscapeArchive.xcarchive" \
