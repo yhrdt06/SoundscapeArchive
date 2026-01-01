@@ -189,13 +189,19 @@ private struct BarSegment: View {
     }
 }
 
-#Preview {
-    @Previewable @State var sources = SoundSourcePerception(
+struct SoundSourceInputViewPreview: View {
+    @State private var sources = SoundSourcePerception(
         traffic: 3.0, other: 2.0, human: 5.0, natural: 7.0
     )
 
-    return ScrollView {
-        SoundSourceInputView(sources: $sources)
-            .padding()
+    var body: some View {
+        ScrollView {
+            SoundSourceInputView(sources: $sources)
+                .padding()
+        }
     }
+}
+
+#Preview {
+    SoundSourceInputViewPreview()
 }

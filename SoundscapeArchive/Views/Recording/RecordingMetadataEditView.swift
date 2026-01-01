@@ -241,6 +241,7 @@ struct FlowLayout: Layout {
     )
 
     let record = SoundscapeRecord(
+        userId: "preview-user",
         metadata: metadata,
         waveformPreview: (0..<50).map { _ in Double.random(in: 0.1...1.0) }
     )

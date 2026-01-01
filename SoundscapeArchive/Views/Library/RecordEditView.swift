@@ -245,7 +245,7 @@ struct RecordEditView: View {
                 tags: ["都市", "駅"],
                 locationName: "渋谷区渋谷2丁目",
                 equipment: Equipment(
-                    microphoneType: "内蔵マイク"
+                    microphone: "内蔵マイク"
                 )
             ),
             syncStatus: .synced

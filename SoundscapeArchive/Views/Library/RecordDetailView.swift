@@ -203,7 +203,7 @@ struct RecordDetailView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
 
-                    FlowLayout(spacing: 8) {
+                    DetailFlowLayout(spacing: 8) {
                         ForEach(record.metadata.tags, id: \.self) { tag in
                             Text(tag)
                                 .font(.caption)
@@ -358,7 +358,7 @@ private struct DetailItem: View {
 
 // MARK: - Flow Layout
 
-struct FlowLayout: Layout {
+private struct DetailFlowLayout: Layout {
     var spacing: CGFloat = 8
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
@@ -451,7 +451,7 @@ struct EvaluationSummaryView: View {
                 tags: ["都市", "駅", "雑踏", "朝"],
                 locationName: "渋谷区渋谷2丁目",
                 equipment: Equipment(
-                    microphoneType: "内蔵マイク"
+                    microphone: "内蔵マイク"
                 )
             ),
             syncStatus: .synced
