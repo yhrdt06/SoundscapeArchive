@@ -4,63 +4,91 @@ import SwiftData
 /// Library main view with recording list
 struct LibraryView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var viewModel = LibraryViewModel()
+    @State private var viewModel: LibraryViewModel?
     @State private var showingDeleteConfirmation = false
     @State private var recordToDelete: SoundscapeRecord?
     @State private var isGridView = false
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Stats header
-                if !viewModel.records.isEmpty {
-                    statsHeader
-                }
-
-                // Content
-                if viewModel.isLoading {
-                    ProgressView("読み込み中...")
-                        .frame(maxHeight: .infinity)
-                } else if viewModel.records.isEmpty {
-                    emptyState
-                } else if viewModel.filteredRecords.isEmpty {
-                    noResultsState
-                } else {
-                    recordsList
-                }
-            }
-            .navigationTitle("ライブラリ")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    sortMenu
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isGridView.toggle()
-                    } label: {
-                        Image(systemName: isGridView ? "list.bullet" : "square.grid.2x2")
-                    }
-                }
-            }
-            .searchable(text: $viewModel.searchText, prompt: "タイトル、場所、タグで検索")
-            .refreshable {
-                await viewModel.loadRecords(context: modelContext)
-            }
-            .task {
-                await viewModel.loadRecords(context: modelContext)
-            }
-            .alert("録音を削除", isPresented: $showingDeleteConfirmation) {
-                Button("キャンセル", role: .cancel) {}
-                Button("削除", role: .destructive) {
-                    if let record = recordToDelete {
-                        Task {
-                            try? await viewModel.deleteRecord(record, context: modelContext)
+            if let viewModel = viewModel {
+                LibraryContentView(
+                    viewModel: viewModel,
+                    modelContext: modelContext,
+                    showingDeleteConfirmation: $showingDeleteConfirmation,
+                    recordToDelete: $recordToDelete,
+                    isGridView: $isGridView
+                )
+            } else {
+                ProgressView("読み込み中...")
+                    .task {
+                        await MainActor.run {
+                            viewModel = LibraryViewModel()
                         }
                     }
-                }
-            } message: {
-                Text("この録音を削除しますか？この操作は取り消せません。")
             }
+        }
+    }
+}
+
+/// Inner content view that uses the ViewModel
+private struct LibraryContentView: View {
+    @Bindable var viewModel: LibraryViewModel
+    let modelContext: ModelContext
+    @Binding var showingDeleteConfirmation: Bool
+    @Binding var recordToDelete: SoundscapeRecord?
+    @Binding var isGridView: Bool
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Stats header
+            if !viewModel.records.isEmpty {
+                statsHeader
+            }
+
+            // Content
+            if viewModel.isLoading {
+                ProgressView("読み込み中...")
+                    .frame(maxHeight: .infinity)
+            } else if viewModel.records.isEmpty {
+                emptyState
+            } else if viewModel.filteredRecords.isEmpty {
+                noResultsState
+            } else {
+                recordsList
+            }
+        }
+        .navigationTitle("ライブラリ")
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                sortMenu
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    isGridView.toggle()
+                } label: {
+                    Image(systemName: isGridView ? "list.bullet" : "square.grid.2x2")
+                }
+            }
+        }
+        .searchable(text: $viewModel.searchText, prompt: "タイトル、場所、タグで検索")
+        .refreshable {
+            await viewModel.loadRecords(context: modelContext)
+        }
+        .task {
+            await viewModel.loadRecords(context: modelContext)
+        }
+        .alert("録音を削除", isPresented: $showingDeleteConfirmation) {
+            Button("キャンセル", role: .cancel) {}
+            Button("削除", role: .destructive) {
+                if let record = recordToDelete {
+                    Task {
+                        try? await viewModel.deleteRecord(record, context: modelContext)
+                    }
+                }
+            }
+        } message: {
+            Text("この録音を削除しますか？この操作は取り消せません。")
         }
     }
 

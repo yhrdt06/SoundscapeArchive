@@ -114,6 +114,15 @@ final class AudioPlayer: NSObject {
         seek(to: currentTime - seconds)
     }
 
+    /// Skip by seconds (positive or negative)
+    func skip(seconds: TimeInterval) {
+        if seconds >= 0 {
+            skipForward(seconds)
+        } else {
+            skipBackward(-seconds)
+        }
+    }
+
     // MARK: - Progress
 
     var progress: Double {

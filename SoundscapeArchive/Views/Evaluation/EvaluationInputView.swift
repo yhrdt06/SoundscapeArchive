@@ -83,7 +83,7 @@ struct EvaluationInputView: View {
 
                 Image(systemName: "waveform")
                     .font(.title3)
-                    .foregroundStyle(.accent)
+                    .foregroundStyle(Color.accentColor)
             }
 
             VStack(alignment: .leading, spacing: 4) {

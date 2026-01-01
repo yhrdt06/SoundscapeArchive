@@ -5,7 +5,7 @@ import SwiftData
 struct RecordDetailView: View {
     let record: SoundscapeRecord
     @Environment(\.modelContext) private var modelContext
-    @State private var audioPlayer = AudioPlayer()
+    @State private var audioPlayer: AudioPlayer?
     @State private var showingEvaluationSheet = false
     @State private var showingEditSheet = false
 
@@ -13,7 +13,12 @@ struct RecordDetailView: View {
         ScrollView {
             VStack(spacing: 24) {
                 // Playback section
-                playbackSection
+                if let player = audioPlayer {
+                    PlaybackSectionView(audioPlayer: player)
+                } else {
+                    ProgressView()
+                        .frame(height: 200)
+                }
 
                 Divider()
 
@@ -44,11 +49,14 @@ struct RecordDetailView: View {
                 }
             }
         }
-        .onAppear {
+        .task {
+            await MainActor.run {
+                audioPlayer = AudioPlayer()
+            }
             loadAudio()
         }
         .onDisappear {
-            audioPlayer.stop()
+            audioPlayer?.stop()
         }
         .sheet(isPresented: $showingEvaluationSheet) {
             EvaluationInputView(record: record)
@@ -63,6 +71,7 @@ struct RecordDetailView: View {
     // MARK: - Load Audio
 
     private func loadAudio() {
+        guard let audioPlayer = audioPlayer else { return }
         do {
             let dataStore = LocalDataStore(modelContext: modelContext)
             let audioPath = try dataStore.getAudioPath(recordId: record.id)
@@ -70,79 +79,6 @@ struct RecordDetailView: View {
             try audioPlayer.load(url: audioURL)
         } catch {
             print("Failed to load audio: \(error)")
-        }
-    }
-
-    // MARK: - Playback Section
-
-    private var playbackSection: some View {
-        VStack(spacing: 16) {
-            // Waveform visualization placeholder
-            ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.accentColor.opacity(0.1))
-                    .frame(height: 120)
-
-                // Simple waveform representation
-                HStack(spacing: 2) {
-                    ForEach(0..<50, id: \.self) { i in
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(Color.accentColor.opacity(
-                                Double(i) / 50.0 < audioPlayer.progress ? 1.0 : 0.3
-                            ))
-                            .frame(width: 4, height: CGFloat.random(in: 20...80))
-                    }
-                }
-                .padding(.horizontal)
-            }
-
-            // Time display
-            HStack {
-                Text(formatTime(audioPlayer.currentTime))
-                    .font(.caption)
-                    .monospacedDigit()
-                Spacer()
-                Text(formatTime(audioPlayer.duration))
-                    .font(.caption)
-                    .monospacedDigit()
-            }
-            .foregroundStyle(.secondary)
-
-            // Progress slider
-            Slider(value: Binding(
-                get: { audioPlayer.progress },
-                set: { audioPlayer.seek(to: $0) }
-            ))
-            .tint(.accentColor)
-
-            // Playback controls
-            HStack(spacing: 32) {
-                Button {
-                    audioPlayer.skip(seconds: -15)
-                } label: {
-                    Image(systemName: "gobackward.15")
-                        .font(.title2)
-                }
-
-                Button {
-                    if audioPlayer.isPlaying {
-                        audioPlayer.pause()
-                    } else {
-                        audioPlayer.play()
-                    }
-                } label: {
-                    Image(systemName: audioPlayer.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                        .font(.system(size: 64))
-                }
-
-                Button {
-                    audioPlayer.skip(seconds: 15)
-                } label: {
-                    Image(systemName: "goforward.15")
-                        .font(.title2)
-                }
-            }
-            .foregroundStyle(.accent)
         }
     }
 
@@ -309,12 +245,6 @@ struct RecordDetailView: View {
 
     // MARK: - Formatters
 
-    private func formatTime(_ time: TimeInterval) -> String {
-        let minutes = Int(time) / 60
-        let seconds = Int(time) % 60
-        return String(format: "%d:%02d", minutes, seconds)
-    }
-
     private func formatDateTime(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
@@ -326,6 +256,89 @@ struct RecordDetailView: View {
         let minutes = Int(duration) / 60
         let seconds = Int(duration) % 60
         return String(format: "%d分%02d秒", minutes, seconds)
+    }
+}
+
+// MARK: - Playback Section View
+
+private struct PlaybackSectionView: View {
+    @Bindable var audioPlayer: AudioPlayer
+
+    var body: some View {
+        VStack(spacing: 16) {
+            // Waveform visualization placeholder
+            ZStack {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.accentColor.opacity(0.1))
+                    .frame(height: 120)
+
+                // Simple waveform representation
+                HStack(spacing: 2) {
+                    ForEach(0..<50, id: \.self) { i in
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color.accentColor.opacity(
+                                Double(i) / 50.0 < audioPlayer.progress ? 1.0 : 0.3
+                            ))
+                            .frame(width: 4, height: CGFloat.random(in: 20...80))
+                    }
+                }
+                .padding(.horizontal)
+            }
+
+            // Time display
+            HStack {
+                Text(formatTime(audioPlayer.currentTime))
+                    .font(.caption)
+                    .monospacedDigit()
+                Spacer()
+                Text(formatTime(audioPlayer.duration))
+                    .font(.caption)
+                    .monospacedDigit()
+            }
+            .foregroundStyle(.secondary)
+
+            // Progress slider
+            Slider(value: Binding(
+                get: { audioPlayer.progress },
+                set: { audioPlayer.seekToProgress($0) }
+            ))
+            .tint(.accentColor)
+
+            // Playback controls
+            HStack(spacing: 32) {
+                Button {
+                    audioPlayer.skip(seconds: -15)
+                } label: {
+                    Image(systemName: "gobackward.15")
+                        .font(.title2)
+                }
+
+                Button {
+                    if audioPlayer.isPlaying {
+                        audioPlayer.pause()
+                    } else {
+                        audioPlayer.play()
+                    }
+                } label: {
+                    Image(systemName: audioPlayer.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                        .font(.system(size: 64))
+                }
+
+                Button {
+                    audioPlayer.skip(seconds: 15)
+                } label: {
+                    Image(systemName: "goforward.15")
+                        .font(.title2)
+                }
+            }
+            .foregroundStyle(Color.accentColor)
+        }
+    }
+
+    private func formatTime(_ time: TimeInterval) -> String {
+        let minutes = Int(time) / 60
+        let seconds = Int(time) % 60
+        return String(format: "%d:%02d", minutes, seconds)
     }
 }
 

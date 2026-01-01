@@ -4,89 +4,118 @@ import SwiftData
 /// Main recording screen
 struct RecordingView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var viewModel = RecordingViewModel()
+    @State private var viewModel: RecordingViewModel?
     @State private var showMetadataEdit = false
     @State private var completedRecord: SoundscapeRecord?
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Status area
-                statusArea
-                    .frame(height: 100)
-
-                Spacer()
-
-                // Level meter
-                VUMeterView(level: viewModel.currentLevel, peak: viewModel.peakLevel)
-                    .frame(height: 200)
-                    .padding(.horizontal, 40)
-
-                Spacer()
-
-                // Waveform preview
-                if !viewModel.waveformSamples.isEmpty {
-                    WaveformPreviewView(samples: viewModel.waveformSamples)
-                        .frame(height: 80)
-                        .padding(.horizontal)
-                }
-
-                Spacer()
-
-                // Duration display
-                Text(viewModel.formattedDuration)
-                    .font(.system(size: 48, weight: .light, design: .monospaced))
-                    .foregroundStyle(viewModel.isRecording ? .primary : .secondary)
-
-                Spacer()
-
-                // Recording controls
-                RecordingControlsView(
-                    isRecording: viewModel.isRecording,
-                    isPaused: viewModel.isPaused,
-                    onRecord: startRecording,
-                    onStop: stopRecording,
-                    onPause: viewModel.pauseRecording,
-                    onResume: viewModel.resumeRecording,
-                    onCancel: viewModel.cancelRecording
+            if let viewModel = viewModel {
+                RecordingContentView(
+                    viewModel: viewModel,
+                    modelContext: modelContext,
+                    showMetadataEdit: $showMetadataEdit,
+                    completedRecord: $completedRecord
                 )
-                .padding(.bottom, 40)
+            } else {
+                ProgressView("準備中...")
+                    .task {
+                        await MainActor.run {
+                            viewModel = RecordingViewModel()
+                        }
+                    }
             }
-            .navigationTitle("録音")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    locationStatusIcon
-                }
+        }
+    }
+}
+
+/// Inner content view that uses the ViewModel
+private struct RecordingContentView: View {
+    @Bindable var viewModel: RecordingViewModel
+    let modelContext: ModelContext
+    @Binding var showMetadataEdit: Bool
+    @Binding var completedRecord: SoundscapeRecord?
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Status area
+            statusArea
+                .frame(height: 100)
+
+            Spacer()
+
+            // Level meter
+            VUMeterView(level: viewModel.currentLevel, peak: viewModel.peakLevel)
+                .frame(height: 200)
+                .padding(.horizontal, 40)
+
+            Spacer()
+
+            // Waveform preview
+            if !viewModel.waveformSamples.isEmpty {
+                WaveformPreviewView(samples: viewModel.waveformSamples)
+                    .frame(height: 80)
+                    .padding(.horizontal)
             }
-            .onAppear {
-                viewModel.setModelContext(modelContext)
-                Task {
-                    await viewModel.requestPermissions()
-                }
+
+            Spacer()
+
+            // Duration display
+            Text(viewModel.formattedDuration)
+                .font(.system(size: 48, weight: .light, design: .monospaced))
+                .foregroundStyle(viewModel.isRecording ? .primary : .secondary)
+
+            Spacer()
+
+            // Recording controls
+            RecordingControlsView(
+                isRecording: viewModel.isRecording,
+                isPaused: viewModel.isPaused,
+                onRecord: startRecording,
+                onStop: stopRecording,
+                onPause: viewModel.pauseRecording,
+                onResume: viewModel.resumeRecording,
+                onCancel: viewModel.cancelRecording
+            )
+            .padding(.bottom, 40)
+        }
+        .navigationTitle("録音")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                locationStatusIcon
             }
-            .alert("エラー", isPresented: $viewModel.showError) {
-                Button("OK") {
+        }
+        .onAppear {
+            viewModel.setModelContext(modelContext)
+            Task {
+                await viewModel.requestPermissions()
+            }
+        }
+        .alert("エラー", isPresented: Binding(
+            get: { viewModel.showError },
+            set: { _ in viewModel.resetState() }
+        )) {
+            Button("OK") {
+                viewModel.resetState()
+            }
+        } message: {
+            Text(viewModel.error?.localizedDescription ?? "不明なエラー")
+        }
+        .sheet(isPresented: $showMetadataEdit) {
+            if let record = completedRecord {
+                RecordingMetadataEditView(record: record) { _ in
+                    // Save updated record
+                    showMetadataEdit = false
+                    completedRecord = nil
                     viewModel.resetState()
                 }
-            } message: {
-                Text(viewModel.error?.localizedDescription ?? "不明なエラー")
             }
-            .sheet(isPresented: $showMetadataEdit) {
-                if let record = completedRecord {
-                    RecordingMetadataEditView(record: record) { updatedRecord in
-                        // Save updated record
-                        showMetadataEdit = false
-                        completedRecord = nil
-                        viewModel.resetState()
-                    }
-                }
-            }
-            .onChange(of: viewModel.recordingState) { _, newState in
-                if case .completed(let record) = newState {
-                    completedRecord = record
-                    showMetadataEdit = true
-                }
+        }
+        .onChange(of: viewModel.recordingState) { _, newState in
+            if case .completed(let record) = newState {
+                completedRecord = record
+                showMetadataEdit = true
             }
         }
     }

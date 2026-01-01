@@ -194,11 +194,9 @@ enum AuthError: Error, LocalizedError {
     }
 
     static func from(_ error: NSError) -> AuthError {
-        guard let errorCode = AuthErrorCode(rawValue: error.code) else {
-            return .unknown(error.localizedDescription)
-        }
+        let code = AuthErrorCode.Code(rawValue: error.code)
 
-        switch errorCode {
+        switch code {
         case .invalidEmail:
             return .invalidEmail
         case .wrongPassword:
