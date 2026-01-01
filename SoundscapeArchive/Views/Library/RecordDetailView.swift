@@ -51,8 +51,7 @@ struct RecordDetailView: View {
             audioPlayer.stop()
         }
         .sheet(isPresented: $showingEvaluationSheet) {
-            // EvaluationInputView will be implemented in Phase 4
-            Text("評価入力画面（Phase 4で実装）")
+            EvaluationInputView(record: record)
         }
         .sheet(isPresented: $showingEditSheet) {
             NavigationStack {
@@ -407,45 +406,32 @@ struct EvaluationSummaryView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            // ISO metrics summary
+            // Circumplex chart
+            CompactCircumplexView(isoMetrics: evaluation.isoMetrics)
+
+            // Overall ratings
             HStack(spacing: 24) {
                 VStack {
-                    Text(String(format: "%.2f", evaluation.isoMetrics.isoPleasant))
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    Text("Pleasant")
-                        .font(.caption)
+                    HStack(spacing: 2) {
+                        ForEach(1...5, id: \.self) { i in
+                            Image(systemName: i <= evaluation.overallQuality ? "star.fill" : "star")
+                                .font(.caption)
+                                .foregroundStyle(i <= evaluation.overallQuality ? .yellow : .secondary)
+                        }
+                    }
+                    Text("総合評価")
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
 
                 VStack {
-                    Text(String(format: "%.2f", evaluation.isoMetrics.isoEventful))
-                        .font(.title2)
+                    Text("\(evaluation.overallLoudness)")
+                        .font(.title3)
                         .fontWeight(.bold)
-                    Text("Eventful")
-                        .font(.caption)
+                    Text("音量感")
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
-
-                VStack {
-                    Text(evaluation.isoMetrics.quadrant.rawValue)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    Text("象限")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            // Circumplex chart placeholder
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                    .frame(height: 150)
-
-                Text("サーカンプレックス図（Phase 4で実装）")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
         }
     }

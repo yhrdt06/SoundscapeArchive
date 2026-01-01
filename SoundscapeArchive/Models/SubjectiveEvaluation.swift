@@ -3,30 +3,38 @@ import Foundation
 /// Complete subjective evaluation record
 /// Based on ISO/TS 12913-2 Method A
 struct SubjectiveEvaluation: Codable, Identifiable, Equatable {
-    /// Unique identifier
+    /// Unique identifier (format: "eval_timestamp_hex8")
     let id: String
 
     /// Associated soundscape record ID
     let recordId: String
 
+    /// Evaluation timestamp
+    let evaluatedAt: Date
+
     /// PAQ 8-item scores
     var paqScores: PAQScores
-
-    /// Appropriateness rating (0-10)
-    /// この場所にとってのふさわしさ
-    var appropriateness: Double
-
-    /// Sound source perception
-    var soundSources: SoundSourcePerception
-
-    /// Free text comments (印象的だった音・出来事)
-    var freeText: String?
 
     /// Calculated ISO metrics
     var isoMetrics: ISOMetrics
 
+    /// Sound source perception
+    var soundSources: SoundSourcePerception
+
     /// Calculated source metrics
     var sourceMetrics: SourceMetrics
+
+    /// Overall loudness rating (1-10)
+    var overallLoudness: Int
+
+    /// Overall quality rating (1-5)
+    var overallQuality: Int
+
+    /// Appropriateness rating (0-10) - optional
+    var appropriateness: Double?
+
+    /// Free text comments (印象的だった音・出来事)
+    var freeText: String?
 
     /// Anonymous evaluator identifier (optional)
     var evaluatorId: String?
@@ -34,61 +42,67 @@ struct SubjectiveEvaluation: Codable, Identifiable, Equatable {
     /// Evaluation context
     var evaluationContext: String?
 
-    /// Creation timestamp
-    let createdAt: Date
-
-    /// Last update timestamp
-    var updatedAt: Date
-
     /// Synchronization status
     var syncStatus: SyncStatus
 
     enum CodingKeys: String, CodingKey {
         case id
         case recordId = "record_id"
+        case evaluatedAt = "evaluated_at"
         case paqScores = "paq_scores"
-        case appropriateness
-        case soundSources = "sound_sources"
-        case freeText = "free_text"
         case isoMetrics = "iso_metrics"
+        case soundSources = "sound_sources"
         case sourceMetrics = "source_metrics"
+        case overallLoudness = "overall_loudness"
+        case overallQuality = "overall_quality"
+        case appropriateness
+        case freeText = "free_text"
         case evaluatorId = "evaluator_id"
         case evaluationContext = "evaluation_context"
-        case createdAt = "created_at"
-        case updatedAt = "updated_at"
         case syncStatus = "sync_status"
     }
 
+    /// Generate a unique ID (format: "eval_timestamp_hex8")
+    static func generateId() -> String {
+        let timestamp = Int(Date().timeIntervalSince1970)
+        let randomHex = String(format: "%08x", UInt32.random(in: 0...UInt32.max))
+        return "eval_\(timestamp)_\(randomHex)"
+    }
+
     init(
-        id: String = UUID().uuidString,
+        id: String = SubjectiveEvaluation.generateId(),
         recordId: String,
+        evaluatedAt: Date = Date(),
         paqScores: PAQScores,
-        appropriateness: Double,
+        isoMetrics: ISOMetrics? = nil,
         soundSources: SoundSourcePerception,
+        sourceMetrics: SourceMetrics? = nil,
+        overallLoudness: Int = 5,
+        overallQuality: Int = 3,
+        appropriateness: Double? = nil,
         freeText: String? = nil,
         evaluatorId: String? = nil,
         evaluationContext: String? = nil,
-        createdAt: Date = Date(),
-        updatedAt: Date = Date(),
         syncStatus: SyncStatus = .pendingUpload
     ) {
         self.id = id
         self.recordId = recordId
+        self.evaluatedAt = evaluatedAt
         self.paqScores = paqScores
-        self.appropriateness = appropriateness
         self.soundSources = soundSources
+        self.overallLoudness = overallLoudness
+        self.overallQuality = overallQuality
+        self.appropriateness = appropriateness
         self.freeText = freeText
         self.evaluatorId = evaluatorId
         self.evaluationContext = evaluationContext
-        self.createdAt = createdAt
-        self.updatedAt = updatedAt
         self.syncStatus = syncStatus
 
-        // Calculate ISO metrics from PAQ scores
-        self.isoMetrics = ISOMetricsCalculator.calculate(from: paqScores)
+        // Calculate ISO metrics from PAQ scores if not provided
+        self.isoMetrics = isoMetrics ?? ISOMetricsCalculator.calculate(from: paqScores)
 
-        // Calculate source metrics
-        self.sourceMetrics = SourceMetricsCalculator.calculate(from: soundSources)
+        // Calculate source metrics if not provided
+        self.sourceMetrics = sourceMetrics ?? SourceMetricsCalculator.calculate(from: soundSources)
     }
 
     /// Recalculate metrics when PAQ scores or sound sources change
