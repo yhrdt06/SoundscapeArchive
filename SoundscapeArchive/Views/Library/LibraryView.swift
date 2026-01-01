@@ -32,8 +32,9 @@ struct LibraryView: View {
 }
 
 /// Inner content view that uses the ViewModel
+@MainActor
 private struct LibraryContentView: View {
-    @Bindable var viewModel: LibraryViewModel
+    var viewModel: LibraryViewModel
     let modelContext: ModelContext
     @Binding var showingDeleteConfirmation: Bool
     @Binding var recordToDelete: SoundscapeRecord?
@@ -71,7 +72,10 @@ private struct LibraryContentView: View {
                 }
             }
         }
-        .searchable(text: $viewModel.searchText, prompt: "タイトル、場所、タグで検索")
+        .searchable(text: Binding(
+            get: { viewModel.searchText },
+            set: { viewModel.searchText = $0 }
+        ), prompt: "タイトル、場所、タグで検索")
         .refreshable {
             await viewModel.loadRecords(context: modelContext)
         }

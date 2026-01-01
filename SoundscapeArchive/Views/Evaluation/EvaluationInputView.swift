@@ -203,7 +203,9 @@ struct EvaluationInputView: View {
 
     private var submitButton: some View {
         Button {
-            saveEvaluation()
+            Task { @MainActor in
+                await saveEvaluation()
+            }
         } label: {
             HStack {
                 if isSaving {
@@ -226,48 +228,45 @@ struct EvaluationInputView: View {
 
     // MARK: - Actions
 
-    private func saveEvaluation() {
-        guard let userId = AuthManager.shared.userId else { return }
+    @MainActor
+    private func saveEvaluation() async {
+        guard AuthManager.shared.userId != nil else { return }
 
         isSaving = true
 
-        Task {
-            do {
-                let dataStore = LocalDataStore(modelContext: modelContext)
+        do {
+            let dataStore = LocalDataStore(modelContext: modelContext)
 
-                // Calculate metrics
-                let sourceMetrics = SourceMetricsCalculator.calculate(from: soundSources)
+            // Calculate metrics
+            let sourceMetrics = SourceMetricsCalculator.calculate(from: soundSources)
 
-                // Create evaluation
-                let evaluation = SubjectiveEvaluation(
-                    id: SubjectiveEvaluation.generateId(),
-                    recordId: record.id,
-                    evaluatedAt: Date(),
-                    paqScores: paqScores,
-                    isoMetrics: isoMetrics,
-                    soundSources: soundSources,
-                    sourceMetrics: sourceMetrics,
-                    overallLoudness: overallLoudness,
-                    overallQuality: overallQuality
-                )
+            // Create evaluation
+            let evaluation = SubjectiveEvaluation(
+                id: SubjectiveEvaluation.generateId(),
+                recordId: record.id,
+                evaluatedAt: Date(),
+                paqScores: paqScores,
+                isoMetrics: isoMetrics,
+                soundSources: soundSources,
+                sourceMetrics: sourceMetrics,
+                overallLoudness: overallLoudness,
+                overallQuality: overallQuality
+            )
 
-                // Update record with evaluation
-                var updatedRecord = record
-                updatedRecord.evaluation = evaluation
-                updatedRecord.updatedAt = Date()
-                if updatedRecord.syncStatus == .synced {
-                    updatedRecord.syncStatus = .pendingUpload
-                }
-
-                try dataStore.updateRecord(updatedRecord)
-
-                await MainActor.run {
-                    dismiss()
-                }
-            } catch {
-                print("Failed to save evaluation: \(error)")
-                isSaving = false
+            // Update record with evaluation
+            var updatedRecord = record
+            updatedRecord.evaluation = evaluation
+            updatedRecord.updatedAt = Date()
+            if updatedRecord.syncStatus == .synced {
+                updatedRecord.syncStatus = .pendingUpload
             }
+
+            try dataStore.updateRecord(updatedRecord)
+
+            dismiss()
+        } catch {
+            print("Failed to save evaluation: \(error)")
+            isSaving = false
         }
     }
 
