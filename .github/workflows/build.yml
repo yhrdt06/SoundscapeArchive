@@ -114,8 +114,7 @@ jobs:
             -archivePath "${{ runner.temp }}/SoundscapeArchive.xcarchive" \
             -destination "generic/platform=iOS" \
             DEVELOPMENT_TEAM="$DEV_TEAM" \
-            CODE_SIGN_STYLE="Manual" \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
+            CODE_SIGN_STYLE="Automatic" \
             -allowProvisioningUpdates \
             -authenticationKeyPath ~/private_keys/api_key.p8 \
             -authenticationKeyID "$ASC_KEY_ID" \
