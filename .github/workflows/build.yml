@@ -135,12 +135,9 @@ jobs:
       - name: Build and Archive
         env:
           DEV_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
-          # Find the provisioning profile UUID
-          PROFILE_PATH=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision | head -1)
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(/usr/bin/security cms -D -i "$PROFILE_PATH"))
-          echo "Using profile: $PROFILE_UUID"
-
           xcodebuild archive \
             -project SoundscapeArchive.xcodeproj \
             -scheme SoundscapeArchive \
@@ -148,18 +145,18 @@ jobs:
             -archivePath "${{ runner.temp }}/SoundscapeArchive.xcarchive" \
             -destination "generic/platform=iOS" \
             DEVELOPMENT_TEAM="$DEV_TEAM" \
-            CODE_SIGN_STYLE="Manual" \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID"
+            CODE_SIGN_STYLE="Automatic" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/api_key.p8 \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
 
       - name: Export IPA
         env:
           DEV_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
-          # Find the provisioning profile UUID
-          PROFILE_PATH=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision | head -1)
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(/usr/bin/security cms -D -i "$PROFILE_PATH"))
-
           cat > ExportOptions.plist << PLISTEOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -170,12 +167,7 @@ jobs:
             <key>teamID</key>
             <string>${DEV_TEAM}</string>
             <key>signingStyle</key>
-            <string>manual</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>com.soundscape.archive</key>
-              <string>${PROFILE_UUID}</string>
-            </dict>
+            <string>automatic</string>
             <key>uploadSymbols</key>
             <true/>
             <key>destination</key>
@@ -187,7 +179,11 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath "${{ runner.temp }}/SoundscapeArchive.xcarchive" \
             -exportPath "${{ runner.temp }}/export" \
-            -exportOptionsPlist ExportOptions.plist
+            -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/api_key.p8 \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
 
       - name: Upload to TestFlight
         env:
