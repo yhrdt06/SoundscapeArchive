@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
 
 env:
-  XCODE_VERSION: "15.4"
-  IOS_SIMULATOR: "iPhone 15"
-  IOS_VERSION: "17.5"
+  XCODE_VERSION: "16.2"
+  IOS_SIMULATOR: "iPhone 16"
+  IOS_VERSION: "18.2"
 
 jobs:
   build:
