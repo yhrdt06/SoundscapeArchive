@@ -196,6 +196,10 @@ jobs:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
+          # Copy API key to expected location with correct name
+          mkdir -p ~/.private_keys
+          cp ~/private_keys/api_key.p8 ~/.private_keys/AuthKey_${ASC_KEY_ID}.p8
+
           xcrun altool --upload-app \
             -f "${{ runner.temp }}/export/SoundscapeArchive.ipa" \
             -t ios \
